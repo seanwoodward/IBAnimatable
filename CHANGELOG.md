@@ -9,16 +9,22 @@ All notable changes to this project will be documented in this file.
 
 - Add `AnimatableCollectionViewCell`
 - Change `PanFromLeft`, `PanFromRight`, `PanFromTop`, `PanFromBottom`, `PanHorizontally` and `PanVertically` to `Pan(Left)`, `Pan(Right)`, `Pan(Top)`, `Pan(Bottom)`, `Pan(Horizontal)` and `Pan(Vertical)` for `Pan` gesture transition controller. [#125](https://github.com/JakeLin/IBAnimatable/issues/125)
-
-- Add `ExplodeAnimator` to support Explode transition animation. It supports parmaters `Explode(xFactor, minAngle, maxAngle)`, if no specified, the default values are Explode(10, -10, 10). [#155](https://github.com/JakeLin/IBAnimatable/issues/155)
  
 #### Enhancements
 
 - Add `ScreenEdgePanInteractiveAnimator` to support `PanFromRight`, `PanFromTop`, `PanFromBottom`, `PanHorizontally` and `PanVertically` to `ScreenEdgePan(Left)`, `ScreenEdgePan(Right)`, `ScreenEdgePan(Top)`, `ScreenEdgePan(Bottom)`, `ScreenEdgePan(Horizontal)` and `ScreenEdgePan(Vertical)` for `ScreenEdgePan` gesture transition controller. [125](https://github.com/JakeLin/IBAnimatable/issues/125)
-- Support multiple sides for border [168](https://github.com/JakeLin/IBAnimatable/pull/168)
+- Support multiple sides for border [#168](https://github.com/JakeLin/IBAnimatable/pull/168)
+- Add `ExplodeAnimator` to support Explode transition animation. It supports parameters `Explode(xFactor, minAngle, maxAngle)`, if no specified, the default values are `Explode(10, -10, 10)`. [#155](https://github.com/JakeLin/IBAnimatable/issues/155)
+- Add `FoldAnimator` to support Fold transition animation. It supports parameters `Explode(direction, nbFolds)`, if no specified, the default values are `Fold(Left, 2)`. [#155](https://github.com/JakeLin/IBAnimatable/issues/155)
+- Add `PortalAnimator` to support Portal transition animation. It supports parameters `Portal(direction, zoomScale)`, if no specified, the default values are `Portal(Forward, 0.8)`. [#155](https://github.com/JakeLin/IBAnimatable/issues/155)
+- Add `NatGeoAnimator` to support NatGeo transition animation. It supports only a direction `NatGeo(direction)`, if no specified, the default values are `NatGeo(Left)`. [#155](https://github.com/JakeLin/IBAnimatable/issues/155)
+
 
 #### Bugfixes
 
+- Use `weak` for the `viewController` in `InteractiveAnimator` to avoid retain cycle.
+- Fixed the right image of `SideImageDesignable` [#176](https://github.com/JakeLin/IBAnimatable/issues/176)
+- Fix a bug to support single side of border for AnimatableTextField [#179](https://github.com/JakeLin/IBAnimatable/issues/179)
 
 ### [2.2](https://github.com/JakeLin/IBAnimatable/releases/tag/2.2)
 
