@@ -5,17 +5,21 @@
 import UIKit
 
 /**
-TransitionFromDirection: convert from direction to CATransition Subtype used in `CATransition`
+TransitionDirection: used to specify the direction for the transition
 */
-public enum TransitionFromDirection {
+public enum TransitionDirection {
   case Left
   case Right
   case Top
   case Bottom
   case Forward
   case Backward
+  case In
+  case Out
+  case Cross
   
-  var stringValue: String {
+  // Convert from direction to CATransition Subtype used in `CATransition`
+  var CATransitionSubtype: String {
     switch self {
     case .Left:
       return kCATransitionFromLeft
@@ -30,5 +34,9 @@ public enum TransitionFromDirection {
     default:
       return ""
     }
+  }
+  
+  var isHorizontal: Bool {
+    return self == .Left || self == .Right
   }
 }

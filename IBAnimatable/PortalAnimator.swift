@@ -14,10 +14,10 @@ public class PortalAnimator: NSObject, AnimatedTransitioning {
   public var interactiveGestureType: InteractiveGestureType?
   
   // MARK: - private
-  private var fromDirection: TransitionFromDirection
+  private var fromDirection: TransitionDirection
   private var zoomScale: CGFloat = 0.8
   
-  init(fromDirection: TransitionFromDirection, params: [String], transitionDuration: Duration) {
+  public init(fromDirection: TransitionDirection, params: [String], transitionDuration: Duration) {
     self.transitionDuration = transitionDuration
     self.fromDirection = fromDirection
     
@@ -27,12 +27,14 @@ public class PortalAnimator: NSObject, AnimatedTransitioning {
     }
     
     switch fromDirection {
-    case .Backward:
-      self.transitionAnimationType = .Portal(direction: .Backward, params: params)
-      self.reverseAnimationType = .Portal(direction: .Forward, params: params)
-    default:
+    case .Forward:
       self.transitionAnimationType = .Portal(direction: .Forward, params: params)
       self.reverseAnimationType = .Portal(direction: .Backward, params: params)
+      self.interactiveGestureType = .Pinch(direction: .Close)
+    default:
+      self.transitionAnimationType = .Portal(direction: .Backward, params: params)
+      self.reverseAnimationType = .Portal(direction: .Forward, params: params)
+      self.interactiveGestureType = .Pinch(direction: .Open)
     }
 
     super.init()
@@ -51,10 +53,11 @@ extension PortalAnimator: UIViewControllerAnimatedTransitioning {
       return
     }
     
-    if fromDirection == .Forward {
+    switch fromDirection {
+    case .Forward:
       executeForwardAnimation(transitionContext, containerView: containerView, fromView: fromView, toView: toView)
-    } else {
-      executeBackwardAnimations(transitionContext, containerView: containerView, fromView: fromView, toView: toView)
+    default:
+      executeBackwardAnimation(transitionContext, containerView: containerView, fromView: fromView, toView: toView)
     }
   }
   
@@ -80,24 +83,27 @@ private extension PortalAnimator {
     rightHandView.frame = rightSnapshotRegion
     containerView.addSubview(rightHandView)
     
-    fromView.removeFromSuperview()
+    fromView.hidden = true
 
-    UIView.animateWithDuration(transitionDuration, delay: 0.0, options: .CurveEaseOut, animations: {
-      leftHandView.frame = CGRectOffset(leftHandView.frame, -leftHandView.frame.width, 0.0)
-      rightHandView.frame = CGRectOffset(rightHandView.frame, rightHandView.frame.width, 0.0)
-      toViewSnapshot.center = toView.center
-      toViewSnapshot.frame = containerView.frame
-    }, completion: { _ in
-      if transitionContext.transitionWasCancelled() {
-        containerView.addSubview(fromView)
-        self.removeOtherViews(fromView)
-      } else {
-        toView.frame = containerView.frame
-        containerView.addSubview(toView)
-        self.removeOtherViews(toView)
+    UIView.animateWithDuration(transitionDuration, delay: 0.0, options: .CurveEaseOut,
+      animations: {
+        leftHandView.frame = leftHandView.frame.offsetBy(dx: -leftHandView.frame.width, dy: 0.0)
+        rightHandView.frame = rightHandView.frame.offsetBy(dx: rightHandView.frame.width, dy: 0.0)
+        toViewSnapshot.center = toView.center
+        toViewSnapshot.frame = containerView.frame
+      },
+      completion: { _ in
+        fromView.hidden = false
+        if transitionContext.transitionWasCancelled() {
+          self.removeOtherViews(fromView)
+        } else {
+          toView.frame = containerView.frame
+          containerView.addSubview(toView)
+          self.removeOtherViews(toView)
+        }
+        transitionContext.completeTransition(!transitionContext.transitionWasCancelled())
       }
-      transitionContext.completeTransition(!transitionContext.transitionWasCancelled())
-    })
+    )
   }
   
 }
@@ -106,39 +112,41 @@ private extension PortalAnimator {
 
 private extension PortalAnimator {
   
-  func executeBackwardAnimations(transitionContext: UIViewControllerContextTransitioning, containerView: UIView, fromView: UIView, toView: UIView) {
+  func executeBackwardAnimation(transitionContext: UIViewControllerContextTransitioning, containerView: UIView, fromView: UIView, toView: UIView) {
     containerView.addSubview(fromView)
-    toView.frame = CGRectOffset(toView.frame, toView.frame.width, 0)
+    toView.frame = toView.frame.offsetBy(dx: toView.frame.width, dy: 0)
     containerView.addSubview(toView)
 
     let leftSnapshotRegion = CGRect(x: 0, y: 0, width: toView.frame.width / 2, height: toView.bounds.height)
     let leftHandView = toView.resizableSnapshotViewFromRect(leftSnapshotRegion, afterScreenUpdates: true, withCapInsets: UIEdgeInsetsZero)
     leftHandView.frame = leftSnapshotRegion
-    leftHandView.frame = CGRectOffset(leftHandView.frame, -leftHandView.frame.width, 0)
+    leftHandView.frame = leftHandView.frame.offsetBy(dx: -leftHandView.frame.width, dy: 0)
     containerView.addSubview(leftHandView)
 
     let rightSnapshotRegion = CGRect(x: toView.frame.width / 2, y: 0, width: toView.frame.width / 2, height: fromView.frame.height)
     let rightHandView = toView.resizableSnapshotViewFromRect(rightSnapshotRegion, afterScreenUpdates: true, withCapInsets: UIEdgeInsetsZero)
     rightHandView.frame = rightSnapshotRegion
-    rightHandView.frame = CGRectOffset(rightHandView.frame, rightHandView.frame.width, 0)
+    rightHandView.frame = rightHandView.frame.offsetBy(dx: rightHandView.frame.width, dy: 0)
     containerView.addSubview(rightHandView)
 
-    UIView.animateWithDuration(transitionDuration, delay: 0.0, options: .CurveEaseOut, animations: {
-      leftHandView.frame = CGRectOffset(leftHandView.frame, leftHandView.frame.size.width, 0)
-      rightHandView.frame = CGRectOffset(rightHandView.frame, -rightHandView.frame.size.width, 0)
-      let scale = CATransform3DIdentity
-      fromView.layer.transform = CATransform3DScale(scale, self.zoomScale, self.zoomScale, 1)
-    }, completion: { _ in
-      
-      if transitionContext.transitionWasCancelled() {
-        self.removeOtherViews(fromView)
-      } else {
-        self.removeOtherViews(toView)
-        toView.frame = containerView.bounds
-        fromView.layer.transform = CATransform3DIdentity
+    UIView.animateWithDuration(transitionDuration, delay: 0.0, options: .CurveEaseOut,
+      animations: {
+        leftHandView.frame = leftHandView.frame.offsetBy(dx: leftHandView.frame.size.width, dy: 0)
+        rightHandView.frame = rightHandView.frame.offsetBy(dx: -rightHandView.frame.size.width, dy: 0)
+        let scale = CATransform3DIdentity
+        fromView.layer.transform = CATransform3DScale(scale, self.zoomScale, self.zoomScale, 1)
+      },
+      completion: { _ in
+        if transitionContext.transitionWasCancelled() {
+          self.removeOtherViews(fromView)
+        } else {
+          self.removeOtherViews(toView)
+          toView.frame = containerView.bounds
+          fromView.layer.transform = CATransform3DIdentity
+        }
+        transitionContext.completeTransition(!transitionContext.transitionWasCancelled())
       }
-      transitionContext.completeTransition(!transitionContext.transitionWasCancelled())
-    })
+    )
   }
   
 }

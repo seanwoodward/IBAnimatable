@@ -27,6 +27,8 @@ public extension MaskDesignable where Self: UIView {
         maskTriangle()
       case .Wave:
         maskWave()
+      case .Parallelogram:
+        maskParallelogram()
       }
     } else {
       if unwrappedMaskType.hasPrefix(MaskType.Star.rawValue) {
@@ -35,14 +37,22 @@ public extension MaskDesignable where Self: UIView {
         maskWaveFromString(unwrappedMaskType)
       } else if unwrappedMaskType.hasPrefix(MaskType.Polygon.rawValue) {
         maskPolygonFromString(unwrappedMaskType)
+      } else if unwrappedMaskType.hasPrefix(MaskType.Parallelogram.rawValue) {
+        maskParallelogramFromString(unwrappedMaskType)
       }
+      
     }
+    
   }
   
   // MARK: - Circle
   
   private func maskCircle() {
-    layer.cornerRadius = ceil(min(bounds.width, bounds.height))/2
+    let diameter = ceil(min(bounds.width, bounds.height))
+    let origin = CGPoint(x: (bounds.width - diameter) / 2.0, y: (bounds.height - diameter) / 2.0)
+    let size = CGSize(width: diameter, height: diameter)
+    let circlePath = UIBezierPath(ovalInRect: CGRect(origin: origin, size: size))
+    drawPath(circlePath)
   }
   
   // MARK: - Polygon
@@ -60,13 +70,14 @@ public extension MaskDesignable where Self: UIView {
     let polygonPath = maskPolygonBezierPath(sides)
     drawPath(polygonPath)
   }
-
+  
   private func maskPolygonBezierPath(sides: Int) -> UIBezierPath {
     let path = UIBezierPath()
     let center = CGPoint(x: bounds.width / 2.0, y: bounds.height / 2.0)
     var angle: CGFloat = -CGFloat(M_PI / 2.0)
     let angleIncrement = CGFloat(M_PI * 2.0 / Double(sides))
-    let radius = bounds.width / 2.0
+    let length = min(bounds.width, bounds.height)
+    let radius = length / 2.0
     
     path.moveToPoint(pointFrom(angle, radius: radius, offset: center))
     for _ in 1...sides - 1 {
@@ -129,8 +140,43 @@ public extension MaskDesignable where Self: UIView {
     return path
   }
   
+  // MARK: - Parallelogram
+    
+  private func maskParallelogramFromString(mask: String) {
+    if let angle = Double(retrieveMaskParameters(mask, maskName: MaskType.Parallelogram.rawValue)) {
+      maskParallelogram(angle)
+    } else {
+      maskParallelogram()
+    }
+  }
+  
+  private func maskParallelogram(topLeftAngle: Double = 60) {
+    let parallelogramPath = maskParallelogramBezierPath(topLeftAngle)
+    drawPath(parallelogramPath)
+  }
+  
+  private func maskParallelogramBezierPath(topLeftAngle: Double) -> UIBezierPath {
+    let topLeftAngleRad = Double(topLeftAngle) * M_PI / 180
+    let path = UIBezierPath()
+    let offset = abs(CGFloat(tan(topLeftAngleRad - M_PI / 2)) * bounds.height)
+    
+    if topLeftAngle <= 90 {
+      path.moveToPoint(CGPoint(x: 0, y: 0))
+      path.addLineToPoint(CGPoint(x: bounds.width - offset, y: 0))
+      path.addLineToPoint(CGPoint(x: bounds.width, y: bounds.height))
+      path.addLineToPoint(CGPoint(x: offset, y: bounds.height))
+    } else {
+      path.moveToPoint(CGPoint(x: offset, y: 0))
+       path.addLineToPoint(CGPoint(x: bounds.width, y: 0))
+       path.addLineToPoint(CGPoint(x: bounds.width - offset, y: bounds.height))
+       path.addLineToPoint(CGPoint(x: 0, y: bounds.height))
+    }
+    path.closePath()
+    return path
+  }
+  
   // MARK: - Triangle
-
+  
   private func maskTriangle() {
     let trianglePath = maskTriangleBezierPath()
     drawPath(trianglePath)
@@ -138,6 +184,7 @@ public extension MaskDesignable where Self: UIView {
   
   private func maskTriangleBezierPath() -> UIBezierPath {
     let path = UIBezierPath()
+    
     path.moveToPoint(CGPoint(x: bounds.width / 2.0, y: bounds.origin.y))
     path.addLineToPoint(CGPoint(x: bounds.width, y: bounds.height))
     path.addLineToPoint(CGPoint(x: bounds.origin.x, y: bounds.height))
@@ -149,7 +196,13 @@ public extension MaskDesignable where Self: UIView {
   
   private func maskWaveFromString(mask: String) {
     let params = retrieveMaskParameters(mask, maskName: MaskType.Wave.rawValue).componentsSeparatedByString(",")
-    if let unwrappedWidth = Float(params[1]), unwrappedOffset = Float(params[2]) where params.count == 3 {
+    
+    guard params.count == 3 else {
+      maskWave()
+      return
+    }
+    
+    if let unwrappedWidth = Float(params[1]), unwrappedOffset = Float(params[2]) {
       let up = params[0] == "up"
       maskWave(up, waveWidth: CGFloat(unwrappedWidth), waveOffset: CGFloat(unwrappedOffset))
     } else {
@@ -188,10 +241,10 @@ public extension MaskDesignable where Self: UIView {
       up = !up
     } while startX < bounds.maxX
     
-    path.addLineToPoint(CGPoint(x: path.currentPoint.x, y: originY))    
+    path.addLineToPoint(CGPoint(x: path.currentPoint.x, y: originY))
     return path
   }
-
+  
   
   // MARK: - Private helper
   
