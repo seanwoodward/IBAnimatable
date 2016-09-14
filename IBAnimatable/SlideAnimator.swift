@@ -1,6 +1,6 @@
 //
 //  Created by Tom Baranes on 08/05/16.
-//  Copyright © 2016 Jake Lin. All rights reserved.
+//  Copyright © 2016 IBAnimatable. All rights reserved.
 //
 
 import UIKit
@@ -62,6 +62,10 @@ extension SlideAnimator: UIViewControllerAnimatedTransitioning {
       return
     }
     
+    let (_, tempToViewController, _) = retrieveViewControllers(transitionContext)
+    if let toViewController = tempToViewController {
+      toView.frame = transitionContext.finalFrameForViewController(toViewController)
+    }
     
     let travelDistance = horizontal ? containerView.bounds.width : containerView.bounds.height
     let travel = CGAffineTransformMakeTranslation(horizontal ? (reverse ? travelDistance : -travelDistance) : 0, horizontal ? 0 : (reverse ? travelDistance : -travelDistance))

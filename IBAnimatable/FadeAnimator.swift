@@ -1,6 +1,6 @@
 //
 //  Created by Jake Lin on 2/27/16.
-//  Copyright © 2016 Jake Lin. All rights reserved.
+//  Copyright © 2016 IBAnimatable. All rights reserved.
 //
 
 import UIKit
@@ -42,17 +42,24 @@ extension FadeAnimator: UIViewControllerAnimatedTransitioning {
   
   public func animateTransition(transitionContext: UIViewControllerContextTransitioning) {
     let (tempfromView, tempToView, tempContainerView) = retrieveViews(transitionContext)
-    guard let fromView = tempfromView, toView = tempToView, containerView = tempContainerView else {
+    guard let containerView = tempContainerView, toView = tempToView else {
       transitionContext.completeTransition(true)
       return
     }
     
+    let (_, tempToViewController, _) = retrieveViewControllers(transitionContext)
+    if let toViewController = tempToViewController {
+      toView.frame = transitionContext.finalFrameForViewController(toViewController)
+    }
+
     switch direction {
     case .In:
       toView.alpha = 0
       containerView.addSubview(toView)
     case .Out:
-      containerView.insertSubview(toView, belowSubview: fromView)
+      if let fromView = tempfromView {
+        containerView.insertSubview(toView, belowSubview: fromView)
+      }
     default:
       toView.alpha = 0
       containerView.addSubview(toView)
@@ -64,9 +71,9 @@ extension FadeAnimator: UIViewControllerAnimatedTransitioning {
         case .In:
           toView.alpha = 1
         case .Out:
-          fromView.alpha = 0
+          tempfromView?.alpha = 0
         default:
-          fromView.alpha = 0
+          tempfromView?.alpha = 0
           toView.alpha = 1
         }
       },
